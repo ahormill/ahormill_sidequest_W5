@@ -1,19 +1,18 @@
 let cameraX = 0;
 let targetX = 0;
-let screenWidth;
 let currentScreen = 0;
+let screenWidth;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   screenWidth = width;
-
-  let button = select("#nextButton");
-  button.mousePressed(moveForward);
 }
 
 function draw() {
-  // Smooth meditative easing
-  cameraX = lerp(cameraX, targetX, 0.03);
+  background(240); // soft fallback background
+
+  // Smooth, slow meditative movement
+  cameraX = lerp(cameraX, targetX, 0.04);
 
   push();
   translate(-cameraX, 0);
@@ -21,55 +20,63 @@ function draw() {
   drawWinter(0);
   drawSpring(screenWidth);
   drawSummer(screenWidth * 2);
+
   pop();
 }
 
-function moveForward() {
+function mousePressed() {
+  // Click anywhere to transition
   currentScreen++;
-  if (currentScreen > 2) {
-    currentScreen = 0;
-  }
+  if (currentScreen > 2) currentScreen = 0;
   targetX = currentScreen * screenWidth;
 }
 
-/* ---------------- SEASONS ---------------- */
+/* -------- SEASONS -------- */
 
 function drawWinter(offset) {
   push();
   translate(offset, 0);
 
-  drawGradient(color(20, 30, 70), color(180, 220, 255));
-
-  // Snow ground
-  fill(245);
+  // Sky
+  for (let y = 0; y < height; y++) {
+    let inter = map(y, 0, height, 0, 1);
+    let c = lerpColor(color(30, 50, 100), color(200, 230, 255), inter);
+    stroke(c);
+    line(0, y, width, y);
+  }
   noStroke();
+  fill(255);
   rect(0, height * 0.65, width, height);
 
-  // Snowfall
+  // Snow
+  fill(255, 200);
   for (let i = 0; i < 60; i++) {
-    fill(255, 220);
-    let x = (frameCount * 0.4 + i * 150) % width;
-    let y = (frameCount * 0.8 + i * 60) % height;
+    let x = (frameCount * 0.5 + i * 120) % width;
+    let y = (frameCount * 0.8 + i * 80) % height;
     ellipse(x, y, 5);
   }
 
   pop();
 }
-
 function drawSpring(offset) {
   push();
   translate(offset, 0);
 
-  drawGradient(color(160, 210, 255), color(255, 210, 230));
+  for (let y = 0; y < height; y++) {
+    let inter = map(y, 0, height, 0, 1);
+    let c = lerpColor(color(160, 210, 255), color(255, 210, 230), inter);
+    stroke(c);
+    line(0, y, width, y);
+  }
 
-  fill(100, 200, 120);
   noStroke();
+  fill(100, 200, 120);
   rect(0, height * 0.7, width, height);
 
-  // Flowers swaying
+  // Flowers
   for (let i = 0; i < 25; i++) {
     let x = i * 80 + 50;
-    let sway = sin(frameCount * 0.03 + i) * 12;
+    let sway = sin(frameCount * 0.03 + i) * 10;
 
     stroke(40, 120, 60);
     strokeWeight(3);
@@ -77,9 +84,8 @@ function drawSpring(offset) {
 
     noStroke();
     fill(255, 120, 160);
-    ellipse(x + sway, height * 0.58, 18);
+    ellipse(x + sway, height * 0.58, 16);
   }
-
   pop();
 }
 
@@ -87,28 +93,23 @@ function drawSummer(offset) {
   push();
   translate(offset, 0);
 
-  drawGradient(color(255, 170, 90), color(255, 230, 140));
-  fill(80, 180, 80);
-  noStroke();
-  rect(0, height * 0.75, width, height);
-
-  // Pulsing sun
-  let pulse = sin(frameCount * 0.02) * 15;
-  fill(255, 200, 0);
-  ellipse(width - 160, 160, 140 + pulse);
-
-  pop();
-}
-
-/* ---------- GRADIENT FUNCTION ---------- */
-
-function drawGradient(c1, c2) {
   for (let y = 0; y < height; y++) {
     let inter = map(y, 0, height, 0, 1);
-    let c = lerpColor(c1, c2, inter);
+    let c = lerpColor(color(255, 170, 90), color(255, 230, 140), inter);
     stroke(c);
     line(0, y, width, y);
   }
+
+  noStroke();
+  fill(80, 180, 80);
+  rect(0, height * 0.75, width, height);
+
+  // Sun pulse
+  let pulse = sin(frameCount * 0.02) * 15;
+  fill(255, 200, 0);
+  ellipse(width - 150, 150, 140 + pulse);
+
+  pop();
 }
 
 function windowResized() {
