@@ -29,21 +29,19 @@ function setup() {
 }
 
 function draw() {
-  background(20);
+  background(20); // Only ONE background call
 
   // Smooth camera movement
   currentX = lerp(currentX, targetX, easing);
+
+  push();
   translate(-currentX, 0);
 
+  // Draw all three worlds side-by-side
   drawWinter(0);
   drawSpring(width);
   drawSummer(width * 2);
-}
-
-function nextSeason() {
-  currentScreen++;
-  if (currentScreen > 2) currentScreen = 0;
-  targetX = currentScreen * width;
+  pop();
 }
 
 /* ===========================
@@ -54,7 +52,8 @@ function drawWinter(offset) {
   push();
   translate(offset, 0);
 
-  background(40, 60, 90);
+  fill(40, 60, 90);
+  rect(0, 0, width, height);
 
   fill(230);
   rect(0, height * 0.7, width, height * 0.3);
@@ -71,7 +70,8 @@ function drawSpring(offset) {
   push();
   translate(offset, 0);
 
-  background(150, 200, 170);
+  fill(150, 200, 170);
+  rect(0, 0, width, height);
 
   fill(100, 180, 100);
   rect(0, height * 0.7, width, height * 0.3);
@@ -88,7 +88,8 @@ function drawSummer(offset) {
   push();
   translate(offset, 0);
 
-  background(255, 180, 90);
+  fill(255, 180, 90);
+  rect(0, 0, width, height);
 
   fill(80, 160, 80);
   rect(0, height * 0.7, width, height * 0.3);
