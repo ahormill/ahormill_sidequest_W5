@@ -1,84 +1,172 @@
-/*
-Week 5 — Example 4: Data-driven world with JSON + Smooth Camera
+let worldWidth;
+let targetX = 0;
+let currentX = 0;
+let easing = 0.02;
 
-Course: GBDA302 | Instructors: Dr. Karen Cochrane & David Han
-Date: Feb. 12, 2026
+let currentScreen = 0;
 
-Move: WASD/Arrows
+let button;
 
-Learning goals:
-- Extend the JSON-driven world to include camera parameters
-- Implement smooth camera follow using interpolation (lerp)
-- Separate camera behavior from player/world logic
-- Tune motion and feel using external data instead of hard-coded values
-- Maintain player visibility with soft camera clamping
-- Explore how small math changes affect “game feel”
-*/
-
-const VIEW_W = 800;
-const VIEW_H = 480;
-
-let worldData;
-let level;
-let player;
-
-let camX = 0;
-let camY = 0;
-
-function preload() {
-  worldData = loadJSON("world.json"); // load JSON before setup [web:122]
-}
+let snowflakes = [];
+let petals = [];
+let fireflies = [];
 
 function setup() {
-  createCanvas(VIEW_W, VIEW_H);
-  textFont("sans-serif");
-  textSize(14);
+  createCanvas(windowWidth, windowHeight);
+  worldWidth = width * 3;
 
-  level = new WorldLevel(worldData);
+  // Create seasonal particles
+  for (let i = 0; i < 100; i++) {
+    snowflakes.push(new Snow());
+    petals.push(new Petal());
+    fireflies.push(new Firefly());
+  }
 
-  const start = worldData.playerStart ?? { x: 300, y: 300, speed: 3 };
-  player = new Player(start.x, start.y, start.speed);
-
-  camX = player.x - width / 2;
-  camY = player.y - height / 2;
+  // Button
+  button = createButton("transition");
+  button.position(width / 2 - 50, height - 60);
+  button.mousePressed(nextSeason);
 }
 
 function draw() {
-  player.updateInput();
+  background(20);
 
-  // Keep player inside world
-  player.x = constrain(player.x, 0, level.w);
-  player.y = constrain(player.y, 0, level.h);
+  // Smooth camera movement
+  currentX = lerp(currentX, targetX, easing);
+  translate(-currentX, 0);
 
-  // Target camera (center on player)
-  let targetX = player.x - width / 2;
-  let targetY = player.y - height / 2;
-
-  // Clamp target camera safely
-  const maxCamX = max(0, level.w - width);
-  const maxCamY = max(0, level.h - height);
-  targetX = constrain(targetX, 0, maxCamX);
-  targetY = constrain(targetY, 0, maxCamY);
-
-  // Smooth follow using the JSON knob
-  const camLerp = level.camLerp; // ← data-driven now
-  camX = lerp(camX, targetX, camLerp);
-  camY = lerp(camY, targetY, camLerp);
-
-  level.drawBackground();
-
-  push();
-  translate(-camX, -camY);
-  level.drawWorld();
-  player.draw();
-  pop();
-
-  level.drawHUD(player, camX, camY);
+  drawWinter(0);
+  drawSpring(width);
+  drawSummer(width * 2);
 }
 
-function keyPressed() {
-  if (key === "r" || key === "R") {
-    const start = worldData.playerStart ?? { x: 300, y: 300, speed: 3 };
-    player = new Player(start.x, start.y, start.speed);
+function nextSeason() {
+  currentScreen++;
+  if (currentScreen > 2) currentScreen = 0;
+  targetX = currentScreen * width;
+}
+
+/* ===========================
+   SEASON DRAW FUNCTIONS
+=========================== */
+
+function drawWinter(offset) {
+  push();
+  translate(offset, 0);
+
+  background(40, 60, 90);
+
+  fill(230);
+  rect(0, height * 0.7, width, height * 0.3);
+
+  for (let flake of snowflakes) {
+    flake.update();
+    flake.display();
+  }
+
+  pop();
+}
+
+function drawSpring(offset) {
+  push();
+  translate(offset, 0);
+
+  background(150, 200, 170);
+
+  fill(100, 180, 100);
+  rect(0, height * 0.7, width, height * 0.3);
+
+  for (let petal of petals) {
+    petal.update();
+    petal.display();
+  }
+
+  pop();
+}
+
+function drawSummer(offset) {
+  push();
+  translate(offset, 0);
+
+  background(255, 180, 90);
+
+  fill(80, 160, 80);
+  rect(0, height * 0.7, width, height * 0.3);
+
+  for (let fly of fireflies) {
+    fly.update();
+    fly.display();
+  }
+
+  pop();
+}
+
+/* ===========================
+   PARTICLE CLASSES
+=========================== */
+
+class Snow {
+  constructor() {
+    this.x = random(width);
+    this.y = random(height);
+    this.speed = random(0.5, 1.5);
+    this.size = random(2, 5);
+  }
+
+  update() {
+    this.y += this.speed;
+    if (this.y > height) {
+      this.y = 0;
+      this.x = random(width);
+    }
+  }
+
+  display() {
+    fill(255);
+    noStroke();
+    circle(this.x, this.y, this.size);
+  }
+}
+
+class Petal {
+  constructor() {
+    this.x = random(width);
+    this.y = random(height);
+    this.speed = random(0.3, 1);
+    this.size = random(4, 8);
+  }
+
+  update() {
+    this.y += this.speed;
+    this.x += sin(frameCount * 0.01);
+    if (this.y > height) {
+      this.y = 0;
+      this.x = random(width);
+    }
+  }
+
+  display() {
+    fill(255, 150, 200);
+    noStroke();
+    ellipse(this.x, this.y, this.size, this.size * 0.6);
+  }
+}
+
+class Firefly {
+  constructor() {
+    this.x = random(width);
+    this.y = random(height * 0.7);
+    this.size = random(3, 6);
+    this.offset = random(1000);
+  }
+
+  update() {
+    this.y += sin(frameCount * 0.02 + this.offset) * 0.5;
+  }
+
+  display() {
+    fill(255, 255, 100, 150);
+    noStroke();
+    circle(this.x, this.y, this.size);
   }
 }
