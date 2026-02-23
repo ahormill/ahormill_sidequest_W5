@@ -1,66 +1,58 @@
-let worldWidth;
+let cameraX = 0;
 let targetX = 0;
-let currentX = 0;
-let easing = 0.02;
-
+let screenWidth;
 let currentScreen = 0;
-
-let button;
-
-let snowflakes = [];
-let petals = [];
-let fireflies = [];
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  worldWidth = width * 3;
+  screenWidth = width;
 
-  // Create seasonal particles
-  for (let i = 0; i < 100; i++) {
-    snowflakes.push(new Snow());
-    petals.push(new Petal());
-    fireflies.push(new Firefly());
-  }
-
-  // Button
-  button = createButton("transition");
-  button.position(width / 2 - 50, height - 60);
-  button.mousePressed(nextSeason);
+  let button = select("#nextButton");
+  button.mousePressed(moveForward);
 }
 
 function draw() {
-  background(20); // Only ONE background call
+  background(0);
 
-  // Smooth camera movement
-  currentX = lerp(currentX, targetX, easing);
+  // Smooth camera movement (meditative easing)
+  cameraX = lerp(cameraX, targetX, 0.05);
 
   push();
-  translate(-currentX, 0);
-
-  // Draw all three worlds side-by-side
+  translate(-cameraX, 0);
   drawWinter(0);
-  drawSpring(width);
-  drawSummer(width * 2);
+  drawSpring(screenWidth);
+  drawSummer(screenWidth * 2);
+
   pop();
 }
 
-/* ===========================
-   SEASON DRAW FUNCTIONS
-=========================== */
+function moveForward() {
+  currentScreen++;
+  if (currentScreen > 2) {
+    currentScreen = 0;
+  }
+  targetX = currentScreen * screenWidth;
+}
+
+/* ---------------- SEASONS ---------------- */
 
 function drawWinter(offset) {
   push();
   translate(offset, 0);
 
-  fill(40, 60, 90);
-  rect(0, 0, width, height);
+  // Sky
+  backgroundGradient(color(20, 30, 60), color(180, 220, 255));
 
-  fill(230);
-  rect(0, height * 0.7, width, height * 0.3);
+  // Snow ground
+  fill(240);
+  rect(0, height * 0.65, width, height);
 
-  for (let flake of snowflakes) {
-    flake.update();
-    flake.display();
+  // Falling snow
+  for (let i = 0; i < 50; i++) {
+    fill(255, 200);
+    let x = (frameCount * 0.5 + i * 100) % width;
+    let y = (frameCount * 0.8 + i * 50) % height;
+    ellipse(x, y, 4);
   }
 
   pop();
@@ -70,15 +62,22 @@ function drawSpring(offset) {
   push();
   translate(offset, 0);
 
-  fill(150, 200, 170);
-  rect(0, 0, width, height);
+  backgroundGradient(color(150, 200, 255), color(255, 200, 230));
 
-  fill(100, 180, 100);
-  rect(0, height * 0.7, width, height * 0.3);
+  // Grass
+  fill(100, 200, 100);
+  rect(0, height * 0.7, width, height);
 
-  for (let petal of petals) {
-    petal.update();
-    petal.display();
+  // Flowers gently swaying
+  for (let i = 0; i < 20; i++) {
+    let x = i * 80 + 40;
+    let sway = sin(frameCount * 0.03 + i) * 10;
+    stroke(0, 100, 0);
+    line(x, height * 0.7, x + sway, height * 0.6);
+
+    noStroke();
+    fill(255, 100, 150);
+    ellipse(x + sway, height * 0.58, 15);
   }
 
   pop();
@@ -88,86 +87,33 @@ function drawSummer(offset) {
   push();
   translate(offset, 0);
 
-  fill(255, 180, 90);
-  rect(0, 0, width, height);
+  backgroundGradient(color(255, 180, 100), color(255, 220, 120));
 
-  fill(80, 160, 80);
-  rect(0, height * 0.7, width, height * 0.3);
+  // Ground
+  fill(80, 180, 80);
+  rect(0, height * 0.75, width, height);
 
-  for (let fly of fireflies) {
-    fly.update();
-    fly.display();
-  }
+  // Sun pulsing slowly
+  let pulse = sin(frameCount * 0.02) * 10;
+  fill(255, 200, 0);
+  ellipse(width - 150, 150, 120 + pulse);
 
   pop();
 }
 
-/* ===========================
-   PARTICLE CLASSES
-=========================== */
+/* ---------- HELPER ---------- */
 
-class Snow {
-  constructor() {
-    this.x = random(width);
-    this.y = random(height);
-    this.speed = random(0.5, 1.5);
-    this.size = random(2, 5);
-  }
-
-  update() {
-    this.y += this.speed;
-    if (this.y > height) {
-      this.y = 0;
-      this.x = random(width);
-    }
-  }
-
-  display() {
-    fill(255);
-    noStroke();
-    circle(this.x, this.y, this.size);
+function backgroundGradient(c1, c2) {
+  for (let y = 0; y < height; y++) {
+    let inter = map(y, 0, height, 0, 1);
+    let c = lerpColor(c1, c2, inter);
+    stroke(c);
+    line(0, y, width, y);
   }
 }
 
-class Petal {
-  constructor() {
-    this.x = random(width);
-    this.y = random(height);
-    this.speed = random(0.3, 1);
-    this.size = random(4, 8);
-  }
-
-  update() {
-    this.y += this.speed;
-    this.x += sin(frameCount * 0.01);
-    if (this.y > height) {
-      this.y = 0;
-      this.x = random(width);
-    }
-  }
-
-  display() {
-    fill(255, 150, 200);
-    noStroke();
-    ellipse(this.x, this.y, this.size, this.size * 0.6);
-  }
-}
-
-class Firefly {
-  constructor() {
-    this.x = random(width);
-    this.y = random(height * 0.7);
-    this.size = random(3, 6);
-    this.offset = random(1000);
-  }
-
-  update() {
-    this.y += sin(frameCount * 0.02 + this.offset) * 0.5;
-  }
-
-  display() {
-    fill(255, 255, 100, 150);
-    noStroke();
-    circle(this.x, this.y, this.size);
-  }
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  screenWidth = width;
+  targetX = currentScreen * screenWidth;
 }
