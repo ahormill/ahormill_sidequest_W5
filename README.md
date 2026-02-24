@@ -36,5 +36,6 @@ N/A
 ## GenAI
 
 I used GenAI to generate my code.
+https://chatgpt.com/share/699cd509-fc3c-800c-9e87-2072d1d8ccb1
 
 ##
